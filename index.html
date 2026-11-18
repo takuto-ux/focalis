@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOCALIS</title>
+<link rel="icon" href="icon.svg">
+<style>
+:root{
+  --g9:#003c2c; --g8:#00523f; --g7:#00684f; --g6:#0a7d60; --g1:#e6f2ee; --g0:#f3f8f6;
+  --lime:#a6d14a; --ink:#1d2622; --sub:#5f6b66; --line:#e1e8e5; --card:#ffffff; --bg:#f2f5f4;
+  --warn:#c2410c; --warn-bg:#fff4ec; --ok:#0a7d60; --err:#b42318; --err-bg:#fdecea;
+  --r:16px; --sh:0 2px 10px rgba(0,60,44,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer}
+.hidden{display:none!important}
+
+/* ---------- ログイン ---------- */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,var(--g9),var(--g7) 60%,var(--g6));padding:16px}
+.lbox{width:100%;max-width:380px;background:#fff;border-radius:22px;padding:30px 26px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.mark{width:42px;height:42px;border-radius:12px;display:block;flex:none;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.brand b{font-size:19px;letter-spacing:.16em;font-weight:800}.brand small{display:block;color:var(--sub);font-size:11px}
+.lbox h2{font-size:16px;margin:0 0 6px}.lbox p{color:var(--sub);font-size:12px;margin:0 0 16px;line-height:1.6}
+.field{display:block;width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;
+  font-size:15px;margin-bottom:10px;outline:none;background:var(--g0)}
+.field:focus{border-color:var(--g7);background:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;
+  padding:12px 18px;font-weight:700;background:var(--g8);color:#fff;transition:.15s}
+.btn:hover{background:var(--g7)} .btn:disabled{background:#b8c6c0;cursor:default}
+.btn.block{width:100%;padding:14px}
+.btn.ghost{background:#fff;color:var(--g8);border:1.5px solid var(--g8)}
+.btn.ghost:hover{background:var(--g1)}
+.err{color:var(--err);font-size:12px;min-height:18px;margin-top:6px}
+
+/* ---------- ヘッダー ---------- */
+header{background:linear-gradient(160deg,var(--g9),var(--g8) 55%,var(--g7));color:#fff;padding:18px 20px 64px}
+.top{display:flex;align-items:center;justify-content:space-between;max-width:960px;margin:0 auto}
+.top .brand{margin:0}.top .brand small{color:#cfe7dd}
+.icon-btn{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:10px;padding:8px 12px;font-size:12px}
+.icon-btn:hover{background:rgba(255,255,255,.24)}
+.hero{max-width:960px;margin:18px auto 0}
+.hero .lab{font-size:12px;color:#cfe7dd;display:flex;align-items:center;gap:8px}
+.hero .big{font-size:34px;font-weight:800;letter-spacing:.02em;margin-top:4px}
+.hero .big span{font-size:15px;font-weight:600;margin-left:6px}
+.eye{background:none;border:0;color:#cfe7dd;padding:0;font-size:14px}
+
+main{max-width:960px;margin:-46px auto 40px;padding:0 16px}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:18px}
+.notice{display:flex;gap:10px;align-items:flex-start;background:var(--warn-bg);color:var(--warn);
+  border-radius:12px;padding:10px 14px;font-size:12px;margin-bottom:12px;line-height:1.6}
+.notice.ok{background:var(--g1);color:var(--g8)}
+
+/* ---------- タブ ---------- */
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:#fff;border-radius:var(--r);
+  padding:6px;box-shadow:var(--sh);margin-bottom:14px}
+.tab{border:0;background:none;border-radius:12px;padding:12px 6px;color:var(--sub);font-weight:700;font-size:13px;
+  display:flex;flex-direction:column;align-items:center;gap:4px}
+.tab .ic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--g0);font-size:16px}
+.tab.on{background:var(--g1);color:var(--g8)} .tab.on .ic{background:var(--g8);color:#fff}
+
+/* ---------- ステップ ---------- */
+.steps{display:flex;gap:6px;margin:2px 0 16px;flex-wrap:wrap}
+.st{flex:1;min-width:110px;font-size:11px;color:var(--sub);border-top:4px solid var(--line);padding-top:6px}
+.st.on{border-color:var(--g8);color:var(--g8);font-weight:700}.st.done{border-color:var(--lime);color:var(--ink)}
+.sec-t{font-size:15px;font-weight:800;margin:0 0 4px}.sec-s{font-size:12px;color:var(--sub);margin:0 0 14px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.choice{text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:16px;transition:.15s;color:var(--ink)}
+.choice:hover{border-color:var(--g6);box-shadow:var(--sh)}
+.choice.sel{border-color:var(--g8);background:var(--g0);box-shadow:0 0 0 3px rgba(0,82,63,.12)}
+.choice .t{font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px}
+.choice .d{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.6}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--g1);color:var(--g8)}
+.tag.new{background:#eef7d9;color:#4d6b0c}
+table.spec{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+table.spec{table-layout:fixed} table.spec td{padding:6px 0;border-top:1px solid var(--line);word-break:break-all;vertical-align:top}
+table.spec td:first-child{color:var(--sub);width:96px;white-space:nowrap}
+.grid.wide{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:16px}
+.sum{display:grid;grid-template-columns:120px 1fr;gap:8px 12px;font-size:13px;margin:4px 0 14px}
+.sum dt{color:var(--sub)} .sum dd{margin:0;font-weight:700;word-break:break-all}
+.pill{font-size:11px;padding:2px 8px;border-radius:99px;margin-left:6px;font-weight:700}
+.pill.ok{background:var(--g1);color:var(--ok)} .pill.ng{background:var(--err-bg);color:var(--err)}
+.hint{font-size:12px;color:var(--sub);line-height:1.7;margin-top:10px}
+
+/* ---------- 起動カード ---------- */
+.app{display:flex;gap:14px;align-items:center}
+.app .ai{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--g8),var(--g6));
+  color:#fff;display:grid;place-items:center;font-size:24px;flex:none}
+.app .tx{flex:1;min-width:0}.app .tx b{font-size:15px}.app .tx div{font-size:12px;color:var(--sub);margin-top:3px;word-break:break-all}
+
+/* ---------- 明細（起動履歴） ---------- */
+.list-h{display:flex;justify-content:space-between;align-items:center;margin:20px 2px 8px}
+.list-h b{font-size:14px}.list-h small{color:var(--sub);font-size:11px}
+.day{font-size:11px;color:var(--sub);background:var(--g0);padding:6px 18px;margin:0 -18px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .dot{width:10px;height:10px;border-radius:50%;background:#c3ccc8;flex:none}
+.row .dot.run{background:var(--lime);box-shadow:0 0 0 4px #eef7d9}
+.row .m{flex:1;min-width:0}.row .m b{font-size:13px}.row .m div{font-size:11px;color:var(--sub)}
+.row .r{font-size:11px;color:var(--sub);text-align:right}
+
+/* ---------- 設定 ---------- */
+.set-row{display:grid;grid-template-columns:190px 1fr auto;gap:8px;align-items:center;margin-bottom:8px}
+.set-row label{font-size:12px;color:var(--sub)}
+.set-row input{padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;font-size:12px;font-family:Consolas,monospace;width:100%}
+.set-row input:focus{outline:none;border-color:var(--g7)}
+h4{margin:18px 0 10px;font-size:13px;color:var(--g8)}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;
+  background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;transition:.25s;z-index:9;max-width:90vw}
+#toast.show{opacity:1;transform:translateX(-50%)} #toast.err{background:var(--err)}
+@media (max-width:640px){.set-row{grid-template-columns:1fr}.sum{grid-template-columns:1fr}.hero .big{font-size:28px}}
+
+.lnk{background:none;border:0;color:var(--g7);font-size:12px;padding:6px 0;text-decoration:underline}
+.conn{display:inline-flex;align-items:center;gap:6px;font-size:11px;background:rgba(255,255,255,.14);border-radius:99px;padding:5px 10px;color:#e7f5ef}
+.conn i{width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block}
+.conn.on i{background:#bef264}.conn.off i{background:#f87171}
+.hdr-r{display:flex;gap:8px;align-items:center}
+.kbd{font-family:Consolas,monospace;letter-spacing:.1em}
+</style>
+</head>
+<body>
+
+<!-- ===== ログイン ===== -->
+<section id="login">
+  <div class="lbox">
+    <div class="brand"><img class="mark" src="icon.svg" alt=""><div><b>FOCALIS</b><small>Airborne Ultrasound Lab</small></div></div>
+    <div id="l-online">
+      <h2>ログイン</h2>
+      <p>パスワードを入力してください。初めての場合は、ここで入力したものが登録されます。</p>
+      <input class="field" id="pw" type="password" placeholder="パスワード" autocomplete="current-password">
+      <button class="btn block" id="b-login">ログイン</button>
+      <button class="lnk" id="b-offline">ネットにつながらないとき（PCキーで使う）</button>
+    </div>
+    <div id="l-local" class="hidden">
+      <h2>オフラインで使う</h2>
+      <p>計測PCのランチャーの窓に出ている「PCキー」を入力してください。起動ログは記録されません。</p>
+      <input class="field kbd" id="pk0" placeholder="XXXX-XXXX" autocomplete="off">
+      <button class="btn block" id="b-local">はじめる</button>
+      <button class="lnk" id="b-online">パスワードでログインに戻る</button>
+    </div>
+    <div class="err" id="l-err"></div>
+  </div>
+</section>
+
+<!-- ===== 本体 ===== -->
+<section id="appview" class="hidden">
+<header>
+  <div class="top">
+    <div class="brand"><img class="mark" src="icon.svg" alt=""><div><b>FOCALIS</b><small>Airborne Ultrasound Lab</small></div></div>
+    <div class="hdr-r"><span class="conn" id="conn"><i></i><span>確認中</span></span>
+      <button class="icon-btn" id="b-logout">ログアウト</button></div>
+  </div>
+  <div class="hero">
+    <div class="lab">起動中の計測・解析ウィンドウ <button class="eye" id="b-eye" title="表示を切り替え">👁</button></div>
+    <div class="big" id="hero-num">–<span>件</span></div>
+  </div>
+</header>
+
+<main>
+  <div id="notices"></div>
+
+  <nav class="tabs">
+    <button class="tab on" data-tab="ndt"><span class="ic">①</span>非破壊検査<br><small>音波集束</small></button>
+    <button class="tab" data-tab="eichi"><span class="ic">②</span>英知事業<br><small>イメージ</small></button>
+    <button class="tab" data-tab="ana"><span class="ic">③</span>データ解析<br><small>TDMS</small></button>
+    <button class="tab" data-tab="set"><span class="ic">⚙</span>設定<br><small>接続・パス</small></button>
+  </nav>
+
+  <div class="card" id="t-ndt"><div class="steps" id="steps"></div><div id="wiz"></div></div>
+
+  <div class="card hidden" id="t-eichi">
+    <p class="sec-t">英知事業（イメージ）</p>
+    <p class="sec-s">FMC（1ch送信→64ch受信）で取得し、TFM で画像化します。</p>
+    <div class="app"><div class="ai">◎</div>
+      <div class="tx"><b>FMC / TFM イメージング</b><div id="p-fmc">FMC_kai.py</div></div>
+      <button class="btn" data-launch="fmc">起動</button></div>
+  </div>
+
+  <div class="card hidden" id="t-ana">
+    <p class="sec-t">データ解析</p>
+    <p class="sec-s">計測が終わったら、保存した TDMS をここから開いて解析します。</p>
+    <div class="app"><div class="ai">▦</div>
+      <div class="tx"><b>TDMS ビューア（ピークマップ・フィルタ）</b><div id="p-viewer">tdms_viewer_peakmap_filter_fast.py</div></div>
+      <button class="btn" data-launch="viewer">起動</button></div>
+    <p class="hint">計測GUIの「4. 計測結果」タブでも、直近の計測をそのまま表示できます。</p>
+  </div>
+
+  <div class="card hidden" id="t-set">
+    <p class="sec-t">接続</p>
+    <p class="sec-s">この画面からボタンで .py を起動するには、計測PCで launcher.py（start_focalis.bat）を動かしておきます。</p>
+    <div class="set-row"><label>PCキー（ランチャーの窓に表示）</label><input id="cfg-pckey" class="kbd" placeholder="XXXX-XXXX"><span></span></div>
+    <div class="set-row"><label>ランチャーのアドレス</label><input id="cfg-launcher"><span></span></div>
+    <div class="nav"><span></span><button class="btn ghost" id="b-conn">接続を保存</button></div>
+    <div id="set-local">
+      <h4>計測PC：Python</h4>
+      <div class="set-row"><label>PC の名前（ログに残る）</label><input id="cfg-pcname"><span></span></div>
+      <div class="set-row"><label>python.exe（空欄 = ランチャーと同じ）</label><input id="cfg-python"><span></span></div>
+      <h4>計測PC：スクリプト</h4><div id="cfg-scripts"></div>
+      <h4>計測PC：座標CSV</h4><div id="cfg-csv"></div>
+      <div class="nav"><span></span><button class="btn" id="b-save">保存</button></div>
+    </div>
+    <div id="set-pw">
+      <h4>パスワード変更</h4>
+      <div class="set-row"><label>今のパスワード</label><input id="pw-old" type="password"><span></span></div>
+      <div class="set-row"><label>新しいパスワード</label><input id="pw-new" type="password"><span></span></div>
+      <div class="nav"><span></span><button class="btn ghost" id="b-pw">変更</button></div>
+    </div>
+  </div>
+
+  <div class="list-h"><b>起動ログ</b><small id="hist-src"></small></div>
+  <div class="card" id="hist"><div class="hint">まだ起動していません。</div></div>
+</main>
+</section>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+// ================================================================ 接続先
+// Google Apps Script のウェブアプリ URL（ログインと起動ログ）
+const GAS_URL_DEFAULT = "";
+const LAUNCHER_DEFAULT = "http://127.0.0.1:8765";
+const LS = {
+  get(k, d) { try { return localStorage.getItem("focalis_" + k) ?? d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("focalis_" + k, v); } catch (e) {} },
+  del(k) { try { localStorage.removeItem("focalis_" + k); } catch (e) {} },
+};
+const SS = {
+  get(k) { try { return sessionStorage.getItem("focalis_" + k) || ""; } catch (e) { return ""; } },
+  set(k, v) { try { sessionStorage.setItem("focalis_" + k, v); } catch (e) {} },
+  del(k) { try { sessionStorage.removeItem("focalis_" + k); } catch (e) {} },
+};
+const GAS_URL = () => LS.get("gas", GAS_URL_DEFAULT);
+const LAUNCHER = () => LS.get("launcher", LAUNCHER_DEFAULT).replace(/\/+$/, "");
+const PCKEY = () => LS.get("pckey", "");
+
+// ================================================================ 定義
+const STAGES = {
+  old: { name: "SGSP46-800", tag: "旧", app: "mubus_old",
+         spec: [["ストローク","800 mm"],["分解能","50 pulse/mm"],["コントローラ","SHOT-304GS（別の PC）"],["スクリプト","mubus_halton_yoshizawa_sound.py"]] },
+  new: { name: "OSMS26-300", tag: "新", app: "mubus_new",
+         spec: [["ストローク","300 mm"],["分解能","500 pulse/mm"],["コントローラ","SHOT-204MS（GPIB0::4）"],["スクリプト","mubus_halton_yoshizawa_sound_osms26.py"]] },
+};
+const EQUAL = [
+  { key: "grid8x8",   t: "64ch  8×8",    d: "正方格子の 64 素子" },
+  { key: "grid64x1",  t: "64ch  64×1",   d: "1 列に並べた 64 素子" },
+  { key: "grid16x16", t: "256ch  16×16", d: "256ch 計測GUI（256ch_liner_scan_yoshizawa_kai.py）で開きます", app: "linear256" },
+];
+const UNEQUAL = [
+  { key: "halton",  t: "Halton",  d: "Halton 列による不等間隔配置" },
+  { key: "sobol",   t: "Sobol",   d: "Owen スクランブル Sobol 列" },
+  { key: "fermat",  t: "Fermat",  d: "フェルマー螺旋（ひまわり）配置" },
+  { key: "poisson", t: "Poisson", d: "ポアソンディスク配置" },
+];
+const APP_LABEL = { mubus_old: "64ch 計測GUI（旧ステージ）", mubus_new: "64ch 計測GUI（新ステージ）",
+  linear256: "256ch 計測GUI", fmc: "FMC / TFM イメージング", viewer: "TDMS ビューア" };
+const STEP_NAMES = ["ステージ", "配置の種類", "配置", "確認・起動"];
+
+let MODE = SS.get("mode");          // "online"（GAS）/ "local"（PCキーのみ）
+let TOKEN = SS.get("token");
+let CFG = null, LAUNCHER_OK = false, hideNum = false, LOGROWS = null;
+const W = { step: 0, stage: null, kind: null, layout: null };
+
+// ================================================================ 共通
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+function toast(msg, err) {
+  const t = $("#toast"); t.textContent = msg; t.className = "show" + (err ? " err" : "");
+  clearTimeout(t._h); t._h = setTimeout(() => (t.className = ""), 3400);
+}
+async function gas(action, extra) {
+  if (!GAS_URL()) return { ok: false, msg: "GAS の URL が未設定です" };
+  try {
+    const r = await fetch(GAS_URL(), { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action, token: TOKEN, ...extra }) });
+    const j = await r.json();
+    if (j.auth === false) logout(true);
+    return j;
+  } catch (e) { return { ok: false, net: true, msg: "Google Apps Script に接続できません" }; }
+}
+async function lch(path, body) {
+  try {
+    const opt = { method: body ? "POST" : "GET", headers: { "X-PC-Key": PCKEY() } };
+    if (body) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+    const r = await fetch(LAUNCHER() + path, opt);
+    let j = {}; try { j = await r.json(); } catch (e) {}
+    return { status: r.status, ...j };
+  } catch (e) { return { ok: false, net: true, msg: "ランチャーに接続できません（launcher.py は起動していますか？）" }; }
+}
+
+// ================================================================ ログイン
+function showLogin() {
+  $("#appview").classList.add("hidden"); $("#login").classList.remove("hidden");
+  if (!GAS_URL()) { $("#l-online").classList.add("hidden"); $("#l-local").classList.remove("hidden"); }
+}
+$("#b-offline").onclick = () => { $("#l-online").classList.add("hidden"); $("#l-local").classList.remove("hidden"); $("#pk0").value = PCKEY(); };
+$("#b-online").onclick = () => { $("#l-local").classList.add("hidden"); $("#l-online").classList.remove("hidden"); };
+async function doLogin() {
+  $("#l-err").textContent = ""; $("#b-login").disabled = true;
+  const r = await gas("login", { password: $("#pw").value });
+  $("#b-login").disabled = false;
+  if (!r.ok) { $("#l-err").textContent = r.msg || "ログインできません"; return; }
+  TOKEN = r.token; MODE = "online"; SS.set("token", TOKEN); SS.set("mode", MODE); $("#pw").value = "";
+  if (r.firstTime) toast("パスワードを登録しました");
+  enter();
+}
+async function doLocal() {
+  $("#l-err").textContent = "";
+  LS.set("pckey", $("#pk0").value.trim().toUpperCase());
+  const r = await lch("/api/ping");
+  if (r.net) { $("#l-err").textContent = r.msg; return; }
+  if (!r.authed) { $("#l-err").textContent = "PCキーが違います"; return; }
+  MODE = "local"; TOKEN = ""; SS.set("mode", MODE); enter();
+}
+$("#b-login").onclick = doLogin; $("#pw").onkeydown = (e) => e.key === "Enter" && doLogin();
+$("#b-local").onclick = doLocal; $("#pk0").onkeydown = (e) => e.key === "Enter" && doLocal();
+function logout(expired) {
+  TOKEN = ""; MODE = ""; SS.del("token"); SS.del("mode");
+  clearInterval(window._pp); showLogin();
+  if (expired) $("#l-err").textContent = "ログインの有効期限が切れました。もう一度ログインしてください。";
+}
+$("#b-logout").onclick = () => logout(false);
+
+async function enter() {
+  $("#login").classList.add("hidden"); $("#appview").classList.remove("hidden");
+  $("#set-pw").classList.toggle("hidden", MODE !== "online");
+  $("#cfg-pckey").value = PCKEY(); $("#cfg-launcher").value = LAUNCHER();
+  await checkLauncher(); renderWizard(); refresh(true);
+  clearInterval(window._pp); window._pp = setInterval(() => refresh(false), 3000);
+}
+
+// ================================================================ ランチャーとの接続
+async function checkLauncher() {
+  const c = $("#conn");
+  const r = await lch("/api/ping");
+  LAUNCHER_OK = !r.net && !!r.authed;
+  c.className = "conn " + (LAUNCHER_OK ? "on" : "off");
+  c.querySelector("span").textContent = LAUNCHER_OK ? ("計測PC: " + (r.pc_name || "接続中")) : (r.net ? "計測PC 未接続" : "PCキー未設定");
+  if (LAUNCHER_OK) {
+    const cf = await lch("/api/config");
+    if (cf.ok) CFG = cf;
+  } else CFG = null;
+  renderNotices(r); renderSettings();
+  if (CFG) { $("#p-fmc").textContent = CFG.scripts.fmc.path; $("#p-viewer").textContent = CFG.scripts.viewer.path; }
+}
+function renderNotices(ping) {
+  let h = "";
+  if (!LAUNCHER_OK) {
+    h = ping && ping.net
+      ? `<div class="notice">⚠ <div>計測PCのランチャーにつながっていません。計測PCで <b>start_focalis.bat</b> を起動してください。<br>Chrome に「ローカル ネットワークへのアクセス」の確認が出たら「許可」を押してください。</div></div>`
+      : `<div class="notice">⚠ <div>PCキーが未設定か違います。「⚙ 設定」タブで、ランチャーの窓に出ている PCキーを入力してください。</div></div>`;
+  } else {
+    const miss = [...Object.values(CFG.scripts), ...Object.values(CFG.csv)].filter((v) => !v.exists);
+    h = miss.length
+      ? `<div class="notice">⚠ <div>見つからないファイルが ${miss.length} 件あります（${miss.map((m) => esc(m.label)).join("、")}）。「⚙ 設定」タブで場所を指定してください。</div></div>`
+      : `<div class="notice ok">✓ <div>計測PCにつながりました。スクリプトと座標CSVはすべて見つかりました。</div></div>`;
+  }
+  $("#notices").innerHTML = h;
+}
+
+// ================================================================ ① ウィザード
+function choice(key, title, desc, sel, extra = "") {
+  return `<button class="choice ${sel ? "sel" : ""}" data-k="${key}"><div class="t">${title}</div>` +
+         (desc ? `<div class="d">${desc}</div>` : "") + extra + `</button>`;
+}
+const layoutInfo = () => [...EQUAL, ...UNEQUAL].find((x) => x.key === W.layout);
+const appForSelection = () => { const L = layoutInfo(); return (L && L.app) ? L.app : STAGES[W.stage].app; };
+const navBack = () => `<div class="nav"><button class="btn ghost" id="w-prev">戻る</button><span></span></div>`;
+function fileBadge(ent) {
+  if (!ent) return `<span class="pill ng">未確認</span>`;
+  return `<span class="pill ${ent.exists ? "ok" : "ng"}">${ent.exists ? "OK" : "なし"}</span>`;
+}
+function renderWizard() {
+  $("#steps").innerHTML = STEP_NAMES.map((n, i) =>
+    `<div class="st ${i === W.step ? "on" : i < W.step ? "done" : ""}">STEP ${i + 1}<br>${n}</div>`).join("");
+  const box = $("#wiz");
+  if (W.step === 0) {
+    box.innerHTML = `<p class="sec-t">ステージを選んでください</p><p class="sec-s">どちらもシグマ光機（OptoSigma）の製品です。</p>
+      <div class="grid wide">${Object.entries(STAGES).map(([k, s]) => choice(k,
+        `<span class="tag ${k === "new" ? "new" : ""}">${s.tag}</span>${s.name}`, "", W.stage === k,
+        `<table class="spec">${s.spec.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table>`)).join("")}</div>`;
+    box.querySelectorAll(".choice").forEach((b) => (b.onclick = () => { W.stage = b.dataset.k; W.step = 1; renderWizard(); }));
+  } else if (W.step === 1) {
+    box.innerHTML = `<p class="sec-t">配置の種類を選んでください</p><p class="sec-s">ステージ: ${STAGES[W.stage].name}</p>
+      <div class="grid">${choice("equal", "等間隔配置", "格子状に並べた配置（8×8 / 64×1 / 16×16）", W.kind === "equal")}
+      ${choice("unequal", "不等間隔配置", "Halton・Sobol・Fermat・Poisson", W.kind === "unequal")}</div>` + navBack();
+    box.querySelectorAll(".choice").forEach((b) => (b.onclick = () => { W.kind = b.dataset.k; W.layout = null; W.step = 2; renderWizard(); }));
+  } else if (W.step === 2) {
+    const list = W.kind === "equal" ? EQUAL : UNEQUAL;
+    box.innerHTML = `<p class="sec-t">${W.kind === "equal" ? "等間隔配置" : "不等間隔配置"}を選んでください</p>
+      <p class="sec-s">座標CSVは計測PCに登録したものを自動で読み込みます。</p>
+      <div class="grid">${list.map((x) => choice(x.key, esc(x.t) + (CFG ? fileBadge(CFG.csv[x.key]).replace("OK", "CSVあり").replace("なし", "CSVなし") : ""),
+        esc(x.d), W.layout === x.key)).join("")}</div>` + navBack();
+    box.querySelectorAll(".choice").forEach((b) => (b.onclick = () => { W.layout = b.dataset.k; W.step = 3; renderWizard(); }));
+  } else {
+    const L = layoutInfo(), app = appForSelection();
+    const sc = CFG && CFG.scripts[app], cv = CFG && CFG.csv[W.layout];
+    const ready = LAUNCHER_OK && sc && sc.exists && cv && cv.exists;
+    const note = L.app === "linear256"
+      ? `<p class="hint">※ 256ch（16×16）は 256ch 計測GUI で開きます。ステージの設定は 256ch 版スクリプト側のものを使います。</p>` : "";
+    box.innerHTML = `<p class="sec-t">この内容で計測GUIを開きます</p><p class="sec-s">選んだ配置の座標CSVを読み込んだ状態で開きます。</p>
+      <dl class="sum">
+        <dt>ステージ</dt><dd>${STAGES[W.stage].name}（${STAGES[W.stage].tag}）</dd>
+        <dt>配置</dt><dd>${W.kind === "equal" ? "等間隔" : "不等間隔"} / ${esc(L.t)}</dd>
+        <dt>スクリプト</dt><dd>${esc(sc ? sc.path : APP_LABEL[app])}${fileBadge(sc)}</dd>
+        <dt>座標CSV</dt><dd>${esc(cv ? cv.path : L.t)}${fileBadge(cv)}</dd>
+      </dl>${note}
+      <div class="nav"><button class="btn ghost" id="w-prev">戻る</button>
+      <button class="btn" id="w-go" ${ready ? "" : "disabled"}>▶ 計測GUIを起動</button></div>
+      <p class="hint">計測が終わったら「③ データ解析」タブで TDMS を開けます。</p>`;
+    $("#w-go").onclick = () => doLaunch(app, W.layout, `${STAGES[W.stage].name} / ${L.t}`,
+      { stage: STAGES[W.stage].name, layout: L.t });
+  }
+  const bk = $("#w-prev"); if (bk) bk.onclick = () => { W.step = Math.max(0, W.step - 1); renderWizard(); };
+}
+
+// ================================================================ 起動
+async function doLaunch(app, csv, label, meta) {
+  const r = await lch("/api/launch", { app, csv, label });
+  toast(r.msg || (r.ok ? "起動しました" : "起動できませんでした"), !r.ok);
+  if (r.ok && MODE === "online") {
+    gas("log", { entry: { kind: "起動", app: APP_LABEL[app] || app, stage: meta?.stage || "",
+      layout: meta?.layout || "", label: label || "", pc: CFG?.pc_name || "" } }).then(() => refresh(true));
+  }
+  refresh(false);
+}
+document.querySelectorAll("[data-launch]").forEach((b) => (b.onclick = () =>
+  doLaunch(b.dataset.launch, null, APP_LABEL[b.dataset.launch], {})));
+
+// ================================================================ タブ
+document.querySelectorAll(".tab").forEach((t) => (t.onclick = () => {
+  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === t));
+  ["ndt", "eichi", "ana", "set"].forEach((k) => $("#t-" + k).classList.toggle("hidden", k !== t.dataset.tab));
+}));
+$("#b-eye").onclick = () => { hideNum = !hideNum; refresh(false); };
+
+// ================================================================ 起動ログ（明細風）
+let _procs = [];
+async function refresh(withLog) {
+  if (!MODE) return;
+  const r = await lch("/api/procs");
+  if (r.ok) _procs = r.procs;
+  if (!!r.ok !== LAUNCHER_OK) { await checkLauncher(); renderWizard(); }
+  const run = _procs.filter((p) => p.running).length;
+  $("#hero-num").innerHTML = (hideNum ? "＊＊" : (LAUNCHER_OK ? run : "–")) + "<span>件</span>";
+  if (withLog && MODE === "online") { const g = await gas("history", { limit: 50 }); if (g.ok) { LOGROWS = g.rows; window._sheet = g.sheetUrl; } }
+  renderHistory();
+}
+function renderHistory() {
+  // オンライン: スプレッドシートのログ（どの端末からでも見える）。実行中はこのPCの状態で印を付ける
+  const running = new Set(_procs.filter((p) => p.running).map((p) => p.label));
+  let rows;
+  if (MODE === "online" && LOGROWS) {
+    rows = LOGROWS.map((x) => ({ t: x.time, title: x.label || x.app, sub: [x.app, x.pc].filter(Boolean).join(" ・ "),
+      st: running.has(x.label) ? "実行中" : "", run: running.has(x.label) }));
+    $("#hist-src").innerHTML = window._sheet ? `Google スプレッドシートに記録中 ・ <a href="${esc(window._sheet)}" target="_blank" rel="noopener">開く</a>` : "";
+  } else {
+    rows = _procs.map((p) => ({ t: p.started * 1000, title: p.label, sub: APP_LABEL[p.app] || p.app,
+      st: p.running ? "実行中" : "終了" + (p.exit ? `（コード ${p.exit}）` : ""), run: p.running }));
+    $("#hist-src").textContent = "このPCで起動したもの（記録はされません）";
+  }
+  if (!rows.length) { $("#hist").innerHTML = `<div class="hint">まだ起動していません。</div>`; return; }
+  let html = "", last = "";
+  for (const x of rows) {
+    const d = new Date(x.t), day = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+    if (day !== last) { html += `<div class="day">${day}</div>`; last = day; }
+    html += `<div class="row"><span class="dot ${x.run ? "run" : ""}"></span>
+      <div class="m"><b>${esc(x.title)}</b><div>${esc(x.sub)}</div></div>
+      <div class="r">${d.toTimeString().slice(0, 5)}${x.st ? "<br>" + esc(x.st) : ""}</div></div>`;
+  }
+  $("#hist").innerHTML = html;
+}
+
+// ================================================================ 設定
+function renderSettings() {
+  $("#set-local").classList.toggle("hidden", !CFG);
+  if (!CFG) return;
+  $("#cfg-pcname").value = CFG.pc_name || "";
+  $("#cfg-python").value = CFG.python_custom || ""; $("#cfg-python").placeholder = CFG.python;
+  const rows = (sec) => Object.entries(CFG[sec]).map(([k, v]) =>
+    `<div class="set-row"><label>${esc(v.label)}</label><input data-sec="${sec}" data-k="${k}" value="${esc(v.path)}">${fileBadge(v)}</div>`).join("");
+  $("#cfg-scripts").innerHTML = rows("scripts"); $("#cfg-csv").innerHTML = rows("csv");
+}
+$("#b-conn").onclick = async () => {
+  LS.set("pckey", $("#cfg-pckey").value.trim().toUpperCase());
+  LS.set("launcher", $("#cfg-launcher").value.trim() || LAUNCHER_DEFAULT);
+  await checkLauncher(); renderWizard();
+  toast(LAUNCHER_OK ? "計測PCにつながりました" : "つながりませんでした", !LAUNCHER_OK);
+};
+$("#b-save").onclick = async () => {
+  const body = { python: $("#cfg-python").value, pc_name: $("#cfg-pcname").value, scripts: {}, csv: {} };
+  document.querySelectorAll("#t-set input[data-sec]").forEach((i) => (body[i.dataset.sec][i.dataset.k] = i.value));
+  const r = await lch("/api/config", body);
+  if (r.ok) { CFG = r; renderSettings(); renderNotices({}); renderWizard(); toast("保存しました"); } else toast(r.msg || "保存できません", true);
+};
+$("#b-pw").onclick = async () => {
+  const r = await gas("password", { oldPassword: $("#pw-old").value, newPassword: $("#pw-new").value });
+  toast(r.ok ? "パスワードを変更しました。もう一度ログインしてください" : (r.msg || "変更できません"), !r.ok);
+  if (r.ok) { $("#pw-old").value = ""; $("#pw-new").value = ""; setTimeout(() => logout(false), 1200); }
+};
+
+// ================================================================ 開始
+// URL に ?gas=... を付けて開くと GAS の URL を登録できる（初期設定用）
+(() => {
+  const q = new URLSearchParams(location.search);
+  if (q.get("gas")) { LS.set("gas", q.get("gas")); history.replaceState(null, "", location.pathname); }
+})();
+if (MODE === "online" && TOKEN) enter();
+else if (MODE === "local") enter();
+else showLogin();
+</script>
+</body>
+</html>
