@@ -319,8 +319,8 @@ async function doLocal() {
   if (!r.authed) { $("#l-err").textContent = "PCキーが違います"; return; }
   MODE = "local"; TOKEN = ""; SS.set("mode", MODE); enter();
 }
-$("#b-login").onclick = doLogin; $("#pw").onkeydown = (e) => e.key === "Enter" && doLogin();
-$("#b-local").onclick = doLocal; $("#pk0").onkeydown = (e) => e.key === "Enter" && doLocal();
+$("#b-login").onclick = doLogin; $("#pw").onkeydown = (e) => { if (e.key === "Enter") doLogin(); };
+$("#b-local").onclick = doLocal; $("#pk0").onkeydown = (e) => { if (e.key === "Enter") doLocal(); };
 function logout(expired) {
   TOKEN = ""; MODE = ""; SS.del("token"); SS.del("mode");
   clearInterval(window._pp); showLogin();
