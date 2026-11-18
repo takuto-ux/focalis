@@ -534,7 +534,7 @@ async function pickData() {
   const r = await lch("/api/pick", { kind: ANA.src === "volume" ? "folder" : ANA.src, start: ANA.path });
   if (!r.ok) { toast(r.msg || "選べませんでした", true); return false; }
   if (!r.path) return false;
-  ANA.path = r.path; ANA.xs = ""; ANA.vs = ""; LS.set("ana", JSON.stringify(ANA)); anaToForm(); return true;
+  ANA.path = r.path; ANA.xs = ""; ANA.vs = ""; LS.set("ana", JSON.stringify(ANA)); anaToForm(); await inspectAna(); return true;
 }
 $("#a-pick").onclick = pickData;
 $("#a-other").onclick = async () => { if (await pickData()) toast("別のデータを選びました。領域を確かめて「ビューアで開く」を押してください"); };
@@ -544,6 +544,17 @@ $("#a-reset").onclick = () => {
   renderAnaLast(); $("#a-path").focus(); toast("リセットしました");
 };
 function viewerLabel() { return ANA.path.split(/[\\/]/).filter(Boolean).pop() || "TDMS"; }
+async function inspectAna() {
+  if (!LAUNCHER_OK || !ANA.path) return;
+  const r = await lch("/api/inspect", { path: ANA.path, src: ANA.src });
+  if (!r.ok) return;
+  let got = false;
+  if (r.plane) { ANA.plane = r.plane; got = true; }
+  if (r.x_step) { ANA.xs = String(r.x_step); got = true; }
+  if (r.v_step) { ANA.vs = String(r.v_step); got = true; }
+  if (r.scan_mode) { ANA.scan = r.scan_mode; got = true; }
+  if (got) { LS.set("ana", JSON.stringify(ANA)); anaToForm(); toast("データから条件を読み取りました"); }
+}
 async function openViewer(auto) {
   formToAna();
   if (!ANA.path) { $("#a-frm").classList.add("need"); $("#a-path").focus(); toast("データの場所を入れてください", true); return; }
@@ -569,7 +580,7 @@ function renderAnaLast() {
       <button class="btn ghost" id="a-tond">条件を変えて計測（①へ）</button></div></div>`;
   }
   $("#ana-last").innerHTML = h;
-  if ($("#a-use")) $("#a-use").onclick = () => { useResult(r); openViewer(false); };
+  if ($("#a-use")) $("#a-use").onclick = async () => { useResult(r); await inspectAna(); openViewer(false); };
   if ($("#a-again")) $("#a-again").onclick = () => doLaunch(m.app, m.csv, m.label, metaOf(m.label), m.view || undefined);
   if ($("#a-tond")) $("#a-tond").onclick = () => showTab("ndt");
 }
@@ -585,6 +596,7 @@ async function pollResults() {
     RES_SEEN = top; SS.set("res_seen", String(top));
     useResult(RESULTS[0]); showTab("ana"); renderAnaLast();
     toast("計測が終わりました。TDMS ビューアを開きます");
+    await inspectAna();
     openViewer(true);
   } else renderAnaLast();
 }
