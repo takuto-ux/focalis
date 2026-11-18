@@ -225,7 +225,7 @@ h4{margin:18px 0 10px;font-size:13px;color:var(--g8)}
 "use strict";
 // ================================================================ 接続先
 // Google Apps Script のウェブアプリ URL（ログインと起動ログ）
-const GAS_URL_DEFAULT = "";
+const GAS_URL_DEFAULT = "https://script.google.com/macros/s/AKfycbwp3O-g2s9_l7EPLQvQjjx_MuaUoJzrDxtxNm9Hhytnl-xDhi2sNptOSzKDmthgHKlRnQ/exec";
 const LAUNCHER_DEFAULT = "http://127.0.0.1:8765";
 const LS = {
   get(k, d) { try { return localStorage.getItem("focalis_" + k) ?? d; } catch (e) { return d; } },
