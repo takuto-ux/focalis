@@ -202,7 +202,7 @@ h4{margin:18px 0 10px;font-size:13px;color:var(--g8)}
       ①で計測が終わると、ここが自動で開いてビューアが起動します。</p>
     <div class="frm" id="a-frm">
       <label>読み込み方法</label>
-      <div><span class="seg" id="a-src"><button data-v="file" class="on">単一ファイル</button><button data-v="folder">フォルダ内を加算</button></span></div>
+      <div><span class="seg" id="a-src"><button data-v="file" class="on">単一ファイル</button><button data-v="folder">フォルダ内を加算</button><button data-v="volume">ボリューム（3D）</button></span></div>
       <label for="a-path">データの場所</label>
       <div class="path"><input id="a-path" placeholder="C:\data\xxxx.tdms" autocomplete="off"><button class="btn ghost" id="a-pick">参照…</button></div>
       <label>走査平面</label>
@@ -302,7 +302,7 @@ const KIND_OF = (app) => app === "viewer" ? "解析" : app === "fmc" ? "イメ�
 let MODE = SS.get("mode");          // "online"（GAS）/ "local"（PCキーのみ）
 let TOKEN = SS.get("token");
 let CFG = null, LAUNCHER_OK = false, hideNum = false, LOGROWS = null;
-const W = { step: 0, stage: null, kind: null, layout: null };
+const W = { step: 0, stage: null, kind: null, layout: null, mode: "2d", zStart: "", zStep: "", zNum: "" };
 const IW = { step: 0, kind: null, layout: null };
 let LAST_MEAS = null; try { LAST_MEAS = JSON.parse(LS.get("lastmeas", "null")); } catch (e) {}
 let RESULTS = [], RES_SEEN = Number(SS.get("res_seen") || -1), RES_HIDE = Number(SS.get("res_hide") || 0);
@@ -451,11 +451,25 @@ function renderWizard() {
         <dt>スクリプト</dt><dd>${esc(sc ? sc.path : APP_LABEL[app])}${fileBadge(sc)}</dd>
         <dt>座標CSV</dt><dd>${esc(cv ? cv.path : L.t)}${fileBadge(cv)}</dd>
       </dl>${note}
+      <div class="frm" style="margin-top:12px">
+        <label>計測モード</label>
+        <div><span class="seg" id="w-mode"><button data-v="2d" class="${W.mode === "2d" ? "on" : ""}">2D（1面）</button><button data-v="3d" class="${W.mode === "3d" ? "on" : ""}">3D（Zスライス）</button></span></div>
+        ${W.mode === "3d" ? `
+        <label>Z 開始位置 [mm]</label><div><input id="w-zstart" inputmode="decimal" value="${esc(W.zStart)}" placeholder="例: 0"></div>
+        <label>Z ステップ（Step3）[mm]</label><div><input id="w-zstep" inputmode="decimal" value="${esc(W.zStep)}" placeholder="例: 2"></div>
+        <label>スライス枚数</label><div><input id="w-znum" inputmode="numeric" value="${esc(W.zNum)}" placeholder="例: 50"></div>` : ""}
+      </div>
       <div class="nav"><button class="btn ghost" id="w-prev">戻る</button>
       <button class="btn" id="w-go" ${ready ? "" : "disabled"}>▶ 計測GUIを起動</button></div>
       <p class="hint">計測（レコーディング）が終わると「③ データ解析」が自動で開き、保存した TDMS をビューアで表示します。</p>`;
+    box.querySelectorAll("#w-mode button").forEach((b) => (b.onclick = () => { W.mode = b.dataset.v; renderWizard(); }));
+    const wz = (id, key) => { const el = $(id); if (el) el.oninput = () => { W[key] = el.value.trim(); }; };
+    wz("#w-zstart", "zStart"); wz("#w-zstep", "zStep"); wz("#w-znum", "zNum");
     $("#w-go").onclick = () => doLaunch(app, W.layout, `${STAGES[W.stage].name} / ${L.t}`,
-      { stage: STAGES[W.stage].name, layout: L.t });
+      { stage: STAGES[W.stage].name, layout: L.t },
+      W.mode === "3d"
+        ? { mode: "3d", z_start: W.zStart, z_step: W.zStep, z_num: W.zNum }
+        : { mode: "2d" });
   }
   const bk = $("#w-prev"); if (bk) bk.onclick = () => { W.step = Math.max(0, W.step - 1); renderWizard(); };
 }
@@ -503,7 +517,7 @@ function anaToForm() {
   segSet("a-src", ANA.src); segSet("a-plane", ANA.plane);
   $("#a-path").value = ANA.path; $("#a-xs").value = ANA.xs; $("#a-vs").value = ANA.vs; $("#a-scan").value = ANA.scan;
   $("#a-vs-l").textContent = ANA.plane === "XY" ? "y ステップ" : "z ステップ";
-  $("#a-path").placeholder = ANA.src === "folder" ? "C:\\data\\フォルダ" : "C:\\data\\xxxx.tdms";
+  $("#a-path").placeholder = ANA.src === "volume" ? "C:\\data\\フォルダ（volume_index_merged.csv の場所）" : ANA.src === "folder" ? "C:\\data\\フォルダ" : "C:\\data\\xxxx.tdms";
   $("#a-frm").classList.toggle("need", !ANA.path);
 }
 function formToAna() {
@@ -517,7 +531,7 @@ document.querySelectorAll("#a-plane button").forEach((b) => (b.onclick = () => {
 async function pickData() {
   if (!LAUNCHER_OK) { toast("計測PCにつながっていません", true); return false; }
   toast("計測PCに選択の窓を出しました（タスクバーも確認してください）");
-  const r = await lch("/api/pick", { kind: ANA.src, start: ANA.path });
+  const r = await lch("/api/pick", { kind: ANA.src === "volume" ? "folder" : ANA.src, start: ANA.path });
   if (!r.ok) { toast(r.msg || "選べませんでした", true); return false; }
   if (!r.path) return false;
   ANA.path = r.path; ANA.xs = ""; ANA.vs = ""; LS.set("ana", JSON.stringify(ANA)); anaToForm(); return true;
@@ -534,7 +548,8 @@ async function openViewer(auto) {
   formToAna();
   if (!ANA.path) { $("#a-frm").classList.add("need"); $("#a-path").focus(); toast("データの場所を入れてください", true); return; }
   await doLaunch("viewer", null, viewerLabel(), { layout: auto ? "計測後に自動" : "" },
-    { tdms: ANA.path, plane: ANA.plane, x_step: ANA.xs, v_step: ANA.vs, scan_mode: ANA.scan });
+    { tdms: ANA.path, plane: ANA.plane, x_step: ANA.xs, v_step: ANA.vs, scan_mode: ANA.scan,
+      volume: ANA.src === "volume" ? 1 : 0 });
 }
 $("#a-go").onclick = () => openViewer(false);
 function renderAnaLast() {
@@ -555,7 +570,7 @@ function renderAnaLast() {
   }
   $("#ana-last").innerHTML = h;
   if ($("#a-use")) $("#a-use").onclick = () => { useResult(r); openViewer(false); };
-  if ($("#a-again")) $("#a-again").onclick = () => doLaunch(m.app, m.csv, m.label, metaOf(m.label));
+  if ($("#a-again")) $("#a-again").onclick = () => doLaunch(m.app, m.csv, m.label, metaOf(m.label), m.view || undefined);
   if ($("#a-tond")) $("#a-tond").onclick = () => showTab("ndt");
 }
 function metaOf(label) { const p = String(label || "").split(" / "); return { stage: p[1] ? p[0] : "", layout: p[1] || p[0] || "" }; }
@@ -578,10 +593,12 @@ async function pollResults() {
 async function doLaunch(app, csv, label, meta, view) {
   const r = await lch("/api/launch", { app, csv, label, view });
   toast(r.msg || (r.ok ? "起動しました" : "起動できませんでした"), !r.ok);
-  if (r.ok && MEAS_APPS.includes(app)) { LAST_MEAS = { app, csv, label }; LS.set("lastmeas", JSON.stringify(LAST_MEAS)); renderAnaLast(); }
+  if (r.ok && MEAS_APPS.includes(app)) { LAST_MEAS = { app, csv, label, view: view || null }; LS.set("lastmeas", JSON.stringify(LAST_MEAS)); renderAnaLast(); }
   if (r.ok && MODE === "online") {
     gas("log", { entry: { kind: KIND_OF(app), app: APP_LABEL[app] || app, stage: meta?.stage || "",
-      layout: meta?.layout || "", label: label || "", pc: CFG?.pc_name || "" } }).then(() => refresh(true));
+      layout: meta?.layout || "", mode: view?.mode || "",
+      z: view?.mode === "3d" ? `${view.z_start || ""}/${view.z_step || ""}/${view.z_num || ""}` : "",
+      label: label || "", pc: CFG?.pc_name || "" } }).then(() => refresh(true));
   }
   refresh(false);
 }
