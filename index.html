@@ -30,7 +30,7 @@ button{font:inherit;cursor:pointer}
 .field{display:block;width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;
   font-size:15px;margin-bottom:10px;outline:none;background:var(--g0)}
 .field:focus{border-color:var(--g7);background:#fff}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;white-space:nowrap;
   padding:12px 18px;font-weight:700;background:var(--g8);color:#fff;transition:.15s}
 .btn:hover{background:var(--g7)} .btn:disabled{background:#b8c6c0;cursor:default}
 .btn.block{width:100%;padding:14px}
@@ -123,6 +123,24 @@ h4{margin:18px 0 10px;font-size:13px;color:var(--g8)}
 .conn.on i{background:#bef264}.conn.off i{background:#f87171}
 .hdr-r{display:flex;gap:8px;align-items:center}
 .kbd{font-family:Consolas,monospace;letter-spacing:.1em}
+
+/* ---------- ③ データ解析 ---------- */
+.frm{display:grid;grid-template-columns:150px 1fr;gap:10px 12px;align-items:center;margin:4px 0 6px}
+.frm>label{font-size:12px;color:var(--sub)}
+.frm input,.frm select{padding:10px 11px;border:1.5px solid var(--line);border-radius:10px;font-size:13px;width:100%;background:#fff;color:var(--ink)}
+.frm input:focus,.frm select:focus{outline:none;border-color:var(--g7)}
+.frm .path{display:flex;gap:8px}.frm .path input{font-family:Consolas,monospace;font-size:12px}
+.frm .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.frm .two span{display:block;font-size:11px;color:var(--sub);margin-bottom:3px}
+.seg{display:inline-flex;background:var(--g0);border-radius:10px;padding:3px;gap:3px}
+.seg button{border:0;background:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--sub)}
+.seg button.on{background:#fff;color:var(--g8);box-shadow:0 1px 4px rgba(0,60,44,.12)}
+.need input#a-path{border-color:var(--lime);box-shadow:0 0 0 3px #eef7d9}
+.done-box{border:1.5px solid var(--lime);background:#f7fbec;border-radius:14px;padding:14px 16px;margin-bottom:18px}
+.done-box b{font-size:14px}.done-box .p{font-family:Consolas,monospace;font-size:11px;color:var(--sub);word-break:break-all;margin-top:4px}
+.done-box .nav{margin-top:12px;justify-content:flex-start;flex-wrap:wrap}
+.nav.wrap{flex-wrap:wrap}.nav .gap{flex:1}
+@media (max-width:640px){.frm{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -168,28 +186,42 @@ h4{margin:18px 0 10px;font-size:13px;color:var(--g8)}
 
   <nav class="tabs">
     <button class="tab on" data-tab="ndt"><span class="ic">①</span>非破壊検査<br><small>音波集束</small></button>
-    <button class="tab" data-tab="eichi"><span class="ic">②</span>英知事業<br><small>イメージ</small></button>
+    <button class="tab" data-tab="eichi"><span class="ic">②</span>イメージング<br><small>FMC / TFM</small></button>
     <button class="tab" data-tab="ana"><span class="ic">③</span>データ解析<br><small>TDMS</small></button>
     <button class="tab" data-tab="set"><span class="ic">⚙</span>設定<br><small>接続・パス</small></button>
   </nav>
 
   <div class="card" id="t-ndt"><div class="steps" id="steps"></div><div id="wiz"></div></div>
 
-  <div class="card hidden" id="t-eichi">
-    <p class="sec-t">英知事業（イメージ）</p>
-    <p class="sec-s">FMC（1ch送信→64ch受信）で取得し、TFM で画像化します。</p>
-    <div class="app"><div class="ai">◎</div>
-      <div class="tx"><b>FMC / TFM イメージング</b><div id="p-fmc">FMC_kai.py</div></div>
-      <button class="btn" data-launch="fmc">起動</button></div>
-  </div>
+  <div class="card hidden" id="t-eichi"><div class="steps" id="isteps"></div><div id="iwiz"></div></div>
 
   <div class="card hidden" id="t-ana">
-    <p class="sec-t">データ解析</p>
-    <p class="sec-s">計測が終わったら、保存した TDMS をここから開いて解析します。</p>
-    <div class="app"><div class="ai">▦</div>
-      <div class="tx"><b>TDMS ビューア（ピークマップ・フィルタ）</b><div id="p-viewer">tdms_viewer_peakmap_filter_fast.py</div></div>
-      <button class="btn" data-launch="viewer">起動</button></div>
-    <p class="hint">計測GUIの「4. 計測結果」タブでも、直近の計測をそのまま表示できます。</p>
+    <div id="ana-last"></div>
+    <p class="sec-t">開くデータと領域</p>
+    <p class="sec-s">TDMS の場所と、解析する領域（走査平面・ステップ・走査モード）を入れてビューアを開きます。
+      ①で計測が終わると、ここが自動で開いてビューアが起動します。</p>
+    <div class="frm" id="a-frm">
+      <label>読み込み方法</label>
+      <div><span class="seg" id="a-src"><button data-v="file" class="on">単一ファイル</button><button data-v="folder">フォルダ内を加算</button></span></div>
+      <label for="a-path">データの場所</label>
+      <div class="path"><input id="a-path" placeholder="C:\data\xxxx.tdms" autocomplete="off"><button class="btn ghost" id="a-pick">参照…</button></div>
+      <label>走査平面</label>
+      <div><span class="seg" id="a-plane"><button data-v="XZ" class="on">XZ 平面</button><button data-v="XY">XY 平面</button></span></div>
+      <label>ステップ [mm]</label>
+      <div class="two"><div><span>x ステップ</span><input id="a-xs" inputmode="decimal" placeholder="空欄 = TDMS から読む"></div>
+        <div><span id="a-vs-l">z ステップ</span><input id="a-vs" inputmode="decimal" placeholder="空欄 = TDMS から読む"></div></div>
+      <label for="a-scan">走査モード</label>
+      <select id="a-scan">
+        <option value="top_left_row">① 左上スタート・行主走査（右進 → 下へ）</option>
+        <option value="bottom_left_row">② 左下スタート・行主走査（右進 → 上へ）</option>
+        <option value="top_left_col">③ 左上スタート・列主走査（下進 → 右へ）</option>
+        <option value="bottom_left_col">④ 左下スタート・列主走査（上進 → 右へ）</option>
+      </select>
+    </div>
+    <div class="nav wrap"><button class="btn ghost" id="a-reset">リセット</button><button class="btn ghost" id="a-other">別のデータを開く</button>
+      <span class="gap"></span><button class="btn" id="a-go">▶ ビューアで開く</button></div>
+    <p class="hint">ビューアでは、ここで入れた値が入った「読み込み設定」の窓が出ます。そのほかの項目（正規化・補間など）はその窓で選んでください。<br>
+      TDMS ビューア: <span id="p-viewer">Tdms viewer peakmap filter fast.py</span></p>
   </div>
 
   <div class="card hidden" id="t-set">
@@ -262,11 +294,18 @@ const UNEQUAL = [
 const APP_LABEL = { mubus_old: "64ch 計測GUI（旧ステージ）", mubus_new: "64ch 計測GUI（新ステージ）",
   linear256: "256ch 計測GUI", fmc: "FMC / TFM イメージング", viewer: "TDMS ビューア" };
 const STEP_NAMES = ["ステージ", "配置の種類", "配置", "確認・起動"];
+const ISTEP_NAMES = ["配置の種類", "配置", "確認・起動"];
+const IMG_EQUAL = EQUAL.filter((x) => !x.app);       // FMC は 64ch なので 16×16 は除く
+const MEAS_APPS = ["mubus_old", "mubus_new", "linear256"];
+const KIND_OF = (app) => app === "viewer" ? "解析" : app === "fmc" ? "イメージング" : "計測";
 
 let MODE = SS.get("mode");          // "online"（GAS）/ "local"（PCキーのみ）
 let TOKEN = SS.get("token");
 let CFG = null, LAUNCHER_OK = false, hideNum = false, LOGROWS = null;
 const W = { step: 0, stage: null, kind: null, layout: null };
+const IW = { step: 0, kind: null, layout: null };
+let LAST_MEAS = null; try { LAST_MEAS = JSON.parse(LS.get("lastmeas", "null")); } catch (e) {}
+let RESULTS = [], RES_SEEN = Number(SS.get("res_seen") || -1), RES_HIDE = Number(SS.get("res_hide") || 0);
 
 // ================================================================ 共通
 const $ = (s) => document.querySelector(s);
@@ -332,7 +371,7 @@ async function enter() {
   $("#login").classList.add("hidden"); $("#appview").classList.remove("hidden");
   $("#set-pw").classList.toggle("hidden", MODE !== "online");
   $("#cfg-pckey").value = PCKEY(); $("#cfg-launcher").value = LAUNCHER();
-  await checkLauncher(); renderWizard(); refresh(true);
+  await checkLauncher(); renderWizard(); renderImg(); anaToForm(); renderAnaLast(); refresh(true);
   clearInterval(window._pp); window._pp = setInterval(() => refresh(false), 3000);
 }
 
@@ -348,7 +387,7 @@ async function checkLauncher() {
     if (cf.ok) CFG = cf;
   } else CFG = null;
   renderNotices(r); renderSettings();
-  if (CFG) { $("#p-fmc").textContent = CFG.scripts.fmc.path; $("#p-viewer").textContent = CFG.scripts.viewer.path; }
+  if (CFG) $("#p-viewer").textContent = CFG.scripts.viewer.path;
 }
 function renderNotices(ping) {
   let h = "";
@@ -414,31 +453,146 @@ function renderWizard() {
       </dl>${note}
       <div class="nav"><button class="btn ghost" id="w-prev">戻る</button>
       <button class="btn" id="w-go" ${ready ? "" : "disabled"}>▶ 計測GUIを起動</button></div>
-      <p class="hint">計測が終わったら「③ データ解析」タブで TDMS を開けます。</p>`;
+      <p class="hint">計測（レコーディング）が終わると「③ データ解析」が自動で開き、保存した TDMS をビューアで表示します。</p>`;
     $("#w-go").onclick = () => doLaunch(app, W.layout, `${STAGES[W.stage].name} / ${L.t}`,
       { stage: STAGES[W.stage].name, layout: L.t });
   }
   const bk = $("#w-prev"); if (bk) bk.onclick = () => { W.step = Math.max(0, W.step - 1); renderWizard(); };
 }
 
+// ================================================================ ② イメージング（FMC / TFM）
+function renderImg() {
+  $("#isteps").innerHTML = ISTEP_NAMES.map((n, i) =>
+    `<div class="st ${i === IW.step ? "on" : i < IW.step ? "done" : ""}">STEP ${i + 1}<br>${n}</div>`).join("");
+  const box = $("#iwiz");
+  const back = `<div class="nav"><button class="btn ghost" id="i-prev">戻る</button><span></span></div>`;
+  if (IW.step === 0) {
+    box.innerHTML = `<p class="sec-t">配置の種類を選んでください</p><p class="sec-s">FMC（1ch送信→64ch受信）で取得し、TFM で画像化します。選んだ配置の座標CSVを読み込んで開きます。</p>
+      <div class="grid">${choice("equal", "等間隔配置", "格子状に並べた配置（8×8 / 64×1）", IW.kind === "equal")}
+      ${choice("unequal", "不等間隔配置", "Halton・Sobol・Fermat・Poisson", IW.kind === "unequal")}</div>`;
+    box.querySelectorAll(".choice").forEach((b) => (b.onclick = () => { IW.kind = b.dataset.k; IW.layout = null; IW.step = 1; renderImg(); }));
+  } else if (IW.step === 1) {
+    const list = IW.kind === "equal" ? IMG_EQUAL : UNEQUAL;
+    box.innerHTML = `<p class="sec-t">${IW.kind === "equal" ? "等間隔配置" : "不等間隔配置"}を選んでください</p>
+      <p class="sec-s">座標CSVは計測PCに登録したものを自動で読み込みます。</p>
+      <div class="grid">${list.map((x) => choice(x.key, esc(x.t) + (CFG ? fileBadge(CFG.csv[x.key]).replace("OK", "CSVあり").replace("なし", "CSVなし") : ""),
+        esc(x.d), IW.layout === x.key)).join("")}</div>` + back;
+    box.querySelectorAll(".choice").forEach((b) => (b.onclick = () => { IW.layout = b.dataset.k; IW.step = 2; renderImg(); }));
+  } else {
+    const L = [...IMG_EQUAL, ...UNEQUAL].find((x) => x.key === IW.layout);
+    const sc = CFG && CFG.scripts.fmc, cv = CFG && CFG.csv[IW.layout];
+    const ready = LAUNCHER_OK && sc && sc.exists && cv && cv.exists;
+    box.innerHTML = `<p class="sec-t">この内容で FMC / TFM イメージングを開きます</p><p class="sec-s">選んだ配置の座標CSVを読み込んだ状態で開きます。</p>
+      <dl class="sum">
+        <dt>配置</dt><dd>${IW.kind === "equal" ? "等間隔" : "不等間隔"} / ${esc(L.t)}</dd>
+        <dt>スクリプト</dt><dd>${esc(sc ? sc.path : "FMC_kai.py")}${fileBadge(sc)}</dd>
+        <dt>座標CSV</dt><dd>${esc(cv ? cv.path : L.t)}${fileBadge(cv)}</dd>
+      </dl>
+      <div class="nav"><button class="btn ghost" id="i-prev">戻る</button>
+      <button class="btn" id="i-go" ${ready ? "" : "disabled"}>▶ イメージングを起動</button></div>`;
+    $("#i-go").onclick = () => doLaunch("fmc", IW.layout, `イメージング / ${L.t}`, { layout: L.t });
+  }
+  const bk = $("#i-prev"); if (bk) bk.onclick = () => { IW.step = Math.max(0, IW.step - 1); renderImg(); };
+}
+
+// ================================================================ ③ データ解析
+const ANA0 = { src: "file", path: "", plane: "XZ", xs: "", vs: "", scan: "top_left_row" };
+let ANA = { ...ANA0 }; try { ANA = { ...ANA0, ...JSON.parse(LS.get("ana", "{}")) }; } catch (e) {}
+function segSet(id, v) { document.querySelectorAll(`#${id} button`).forEach((b) => b.classList.toggle("on", b.dataset.v === v)); }
+function anaToForm() {
+  segSet("a-src", ANA.src); segSet("a-plane", ANA.plane);
+  $("#a-path").value = ANA.path; $("#a-xs").value = ANA.xs; $("#a-vs").value = ANA.vs; $("#a-scan").value = ANA.scan;
+  $("#a-vs-l").textContent = ANA.plane === "XY" ? "y ステップ" : "z ステップ";
+  $("#a-path").placeholder = ANA.src === "folder" ? "C:\\data\\フォルダ" : "C:\\data\\xxxx.tdms";
+  $("#a-frm").classList.toggle("need", !ANA.path);
+}
+function formToAna() {
+  ANA.path = $("#a-path").value.trim().replace(/^"|"$/g, ""); ANA.xs = $("#a-xs").value.trim();
+  ANA.vs = $("#a-vs").value.trim(); ANA.scan = $("#a-scan").value;
+  LS.set("ana", JSON.stringify(ANA)); $("#a-frm").classList.toggle("need", !ANA.path);
+}
+["a-path", "a-xs", "a-vs"].forEach((id) => ($("#" + id).oninput = formToAna)); $("#a-scan").onchange = formToAna;
+document.querySelectorAll("#a-src button").forEach((b) => (b.onclick = () => { ANA.src = b.dataset.v; formToAna(); anaToForm(); }));
+document.querySelectorAll("#a-plane button").forEach((b) => (b.onclick = () => { ANA.plane = b.dataset.v; formToAna(); anaToForm(); }));
+async function pickData() {
+  if (!LAUNCHER_OK) { toast("計測PCにつながっていません", true); return false; }
+  toast("計測PCに選択の窓を出しました（タスクバーも確認してください）");
+  const r = await lch("/api/pick", { kind: ANA.src, start: ANA.path });
+  if (!r.ok) { toast(r.msg || "選べませんでした", true); return false; }
+  if (!r.path) return false;
+  ANA.path = r.path; ANA.xs = ""; ANA.vs = ""; LS.set("ana", JSON.stringify(ANA)); anaToForm(); return true;
+}
+$("#a-pick").onclick = pickData;
+$("#a-other").onclick = async () => { if (await pickData()) toast("別のデータを選びました。領域を確かめて「ビューアで開く」を押してください"); };
+$("#a-reset").onclick = () => {
+  ANA = { ...ANA0 }; LS.set("ana", JSON.stringify(ANA)); anaToForm();
+  if (RESULTS[0]) { RES_HIDE = RESULTS[0].id; SS.set("res_hide", String(RES_HIDE)); }
+  renderAnaLast(); $("#a-path").focus(); toast("リセットしました");
+};
+function viewerLabel() { return ANA.path.split(/[\\/]/).filter(Boolean).pop() || "TDMS"; }
+async function openViewer(auto) {
+  formToAna();
+  if (!ANA.path) { $("#a-frm").classList.add("need"); $("#a-path").focus(); toast("データの場所を入れてください", true); return; }
+  await doLaunch("viewer", null, viewerLabel(), { layout: auto ? "計測後に自動" : "" },
+    { tdms: ANA.path, plane: ANA.plane, x_step: ANA.xs, v_step: ANA.vs, scan_mode: ANA.scan });
+}
+$("#a-go").onclick = () => openViewer(false);
+function renderAnaLast() {
+  const r = RESULTS.find((x) => x.id > RES_HIDE);
+  const m = r ? { app: r.app, csv: r.csv, label: r.label } : LAST_MEAS;
+  let h = "";
+  if (r) {
+    const d = new Date(r.time * 1000);
+    h = `<div class="done-box"><b>✓ 計測が終わりました</b>（${d.toTimeString().slice(0, 5)}${r.label ? " ・ " + esc(r.label) : ""}）
+      <div class="p">${esc(r.tdms)}</div>`;
+  } else if (m) {
+    h = `<div class="done-box"><b>前回の計測</b>（${esc(m.label || APP_LABEL[m.app] || m.app)}）`;
+  }
+  if (h) {
+    h += `<div class="nav">${r ? `<button class="btn ghost" id="a-use">このデータを開く</button>` : ""}
+      ${m ? `<button class="btn" id="a-again">▶ もう一度計測（同じ条件）</button>` : ""}
+      <button class="btn ghost" id="a-tond">条件を変えて計測（①へ）</button></div></div>`;
+  }
+  $("#ana-last").innerHTML = h;
+  if ($("#a-use")) $("#a-use").onclick = () => { useResult(r); openViewer(false); };
+  if ($("#a-again")) $("#a-again").onclick = () => doLaunch(m.app, m.csv, m.label, metaOf(m.label));
+  if ($("#a-tond")) $("#a-tond").onclick = () => showTab("ndt");
+}
+function metaOf(label) { const p = String(label || "").split(" / "); return { stage: p[1] ? p[0] : "", layout: p[1] || p[0] || "" }; }
+function useResult(r) { ANA.src = "file"; ANA.path = r.tdms; ANA.xs = ""; ANA.vs = ""; LS.set("ana", JSON.stringify(ANA)); anaToForm(); }
+async function pollResults() {
+  const r = await lch("/api/results");
+  if (!r.ok) return;
+  RESULTS = r.results || [];
+  const top = RESULTS[0] ? RESULTS[0].id : 0;
+  if (RES_SEEN < 0) { RES_SEEN = top; SS.set("res_seen", String(top)); renderAnaLast(); return; }   // 開いた時点より前の知らせは自動では開かない
+  if (top > RES_SEEN) {
+    RES_SEEN = top; SS.set("res_seen", String(top));
+    useResult(RESULTS[0]); showTab("ana"); renderAnaLast();
+    toast("計測が終わりました。TDMS ビューアを開きます");
+    openViewer(true);
+  } else renderAnaLast();
+}
+
 // ================================================================ 起動
-async function doLaunch(app, csv, label, meta) {
-  const r = await lch("/api/launch", { app, csv, label });
+async function doLaunch(app, csv, label, meta, view) {
+  const r = await lch("/api/launch", { app, csv, label, view });
   toast(r.msg || (r.ok ? "起動しました" : "起動できませんでした"), !r.ok);
+  if (r.ok && MEAS_APPS.includes(app)) { LAST_MEAS = { app, csv, label }; LS.set("lastmeas", JSON.stringify(LAST_MEAS)); renderAnaLast(); }
   if (r.ok && MODE === "online") {
-    gas("log", { entry: { kind: "起動", app: APP_LABEL[app] || app, stage: meta?.stage || "",
+    gas("log", { entry: { kind: KIND_OF(app), app: APP_LABEL[app] || app, stage: meta?.stage || "",
       layout: meta?.layout || "", label: label || "", pc: CFG?.pc_name || "" } }).then(() => refresh(true));
   }
   refresh(false);
 }
-document.querySelectorAll("[data-launch]").forEach((b) => (b.onclick = () =>
-  doLaunch(b.dataset.launch, null, APP_LABEL[b.dataset.launch], {})));
 
 // ================================================================ タブ
-document.querySelectorAll(".tab").forEach((t) => (t.onclick = () => {
-  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === t));
-  ["ndt", "eichi", "ana", "set"].forEach((k) => $("#t-" + k).classList.toggle("hidden", k !== t.dataset.tab));
-}));
+function showTab(k) {
+  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x.dataset.tab === k));
+  ["ndt", "eichi", "ana", "set"].forEach((n) => $("#t-" + n).classList.toggle("hidden", n !== k));
+  if (k === "ana") { anaToForm(); renderAnaLast(); if (!ANA.path) setTimeout(() => $("#a-path").focus(), 50); }   // 先に③を開いたら、まず場所と領域を入れてもらう
+}
+document.querySelectorAll(".tab").forEach((t) => (t.onclick = () => showTab(t.dataset.tab)));
 $("#b-eye").onclick = () => { hideNum = !hideNum; refresh(false); };
 
 // ================================================================ 起動ログ（明細風）
@@ -447,7 +601,8 @@ async function refresh(withLog) {
   if (!MODE) return;
   const r = await lch("/api/procs");
   if (r.ok) _procs = r.procs;
-  if (!!r.ok !== LAUNCHER_OK) { await checkLauncher(); renderWizard(); }
+  if (!!r.ok !== LAUNCHER_OK) { await checkLauncher(); renderWizard(); renderImg(); }
+  if (LAUNCHER_OK) await pollResults();
   const run = _procs.filter((p) => p.running).length;
   $("#hero-num").innerHTML = (hideNum ? "＊＊" : (LAUNCHER_OK ? run : "–")) + "<span>件</span>";
   if (withLog && MODE === "online") { const g = await gas("history", { limit: 50 }); if (g.ok) { LOGROWS = g.rows; window._sheet = g.sheetUrl; } }
@@ -491,14 +646,14 @@ function renderSettings() {
 $("#b-conn").onclick = async () => {
   LS.set("pckey", $("#cfg-pckey").value.trim().toUpperCase());
   LS.set("launcher", $("#cfg-launcher").value.trim() || LAUNCHER_DEFAULT);
-  await checkLauncher(); renderWizard();
+  await checkLauncher(); renderWizard(); renderImg();
   toast(LAUNCHER_OK ? "計測PCにつながりました" : "つながりませんでした", !LAUNCHER_OK);
 };
 $("#b-save").onclick = async () => {
   const body = { python: $("#cfg-python").value, pc_name: $("#cfg-pcname").value, scripts: {}, csv: {} };
   document.querySelectorAll("#t-set input[data-sec]").forEach((i) => (body[i.dataset.sec][i.dataset.k] = i.value));
   const r = await lch("/api/config", body);
-  if (r.ok) { CFG = r; renderSettings(); renderNotices({}); renderWizard(); toast("保存しました"); } else toast(r.msg || "保存できません", true);
+  if (r.ok) { CFG = r; renderSettings(); renderNotices({}); renderWizard(); renderImg(); toast("保存しました"); } else toast(r.msg || "保存できません", true);
 };
 $("#b-pw").onclick = async () => {
   const r = await gas("password", { oldPassword: $("#pw-old").value, newPassword: $("#pw-new").value });
